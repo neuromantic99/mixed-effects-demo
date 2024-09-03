@@ -9,14 +9,20 @@ from data import data_obvious_effect, data_one_animal_skews_result
 
 
 def fit_mixed_effects(data: List[Dict]) -> float:
+    # Create a dataframe where each row is the firing rate for a single cell
+    # Also contains the animal ID and its genotype
     df = pd.DataFrame(data)
     df = df.explode("firing_rate_cell", ignore_index=True)
+
+    # Reformat data so statsmodels is happy (Doesn't change the data)
     df["firing_rate_cell"] = pd.to_numeric(df["firing_rate_cell"])
     df["Animal_ID"] = pd.Categorical(df["Animal_ID"])
     df["genotype"] = pd.Categorical(
         df["genotype"], categories=["WT", "NLGF"], ordered=True
     )
 
+    # Fit the model. The model format (firing_rate_cell ~ genotype) is the effect of the
+    # firing rate given the genotype while controlling for the animal ID
     mixed_lm = smf.mixedlm("firing_rate_cell ~ genotype", df, groups=df["Animal_ID"])
     mixed_lm_fit = mixed_lm.fit()
 
